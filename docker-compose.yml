@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  # Name of our service
+  app:
+    build:
+      # Root directory = .
+      context: .
+      args:
+        - DEV=true
+    # Map 8000 from local machine to 8000 in container
+    ports:
+      - "8000:8000"
+    # Map app dir to app in the container, so changes in our proj can reflect in the container same
+    volumes:
+      - ./app:/app
+    # Command to run
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
