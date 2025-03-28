@@ -21,11 +21,18 @@ ARG DEV=false
 # Add user to our image
 RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
+    # Install persist postgreql-client
+    # The command apk add is used in Alpine Linux, a lightweight distribution, to install packages (software) from the system’s package repository.
+    apk add --update --no-cache postgresql-client && \
+    # Group it so can delete later
+    apk add --update --no-cache --virtual .tmp-build-deps \
+      build-base postgresql-dev musl-dev && \
     /py/bin/pip install -r /tmp/requirements.txt && \
     if [ $DEV = "true" ]; \
       then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
     fi && \
     rm -rf /tmp && \
+    apk del .tmp-build-deps && \
     adduser \
         --disabled-password \
         --no-create-home \
