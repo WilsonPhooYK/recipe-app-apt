@@ -40,3 +40,15 @@ docker-compose run --rm app sh -c "python manage.py startapp core"
 
 ## Check db status
 docker-compose run --rm app sh -c "python manage.py wait_for_db"
+
+## Migrations
+docker-compose run --rm app sh -c "python manage.py makemigrations"
+docker-compose run --rm app sh -c "python manage.py wait_for_db && python manage.py migrate"
+
+### If volume error
+docker volume ls
+docker compose down
+docker volume rm recipe-app-apt_dev-db-data
+
+### Create superuser
+docker-compose run --rm app sh -c "python manage.py createsuperuser"

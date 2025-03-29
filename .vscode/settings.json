@@ -1,11 +1,13 @@
 {
   "python.analysis.extraPaths": [
     "${workspaceFolder}/app",
-    "${workspaceFolder}/core"
+    "${workspaceFolder}/core",
+    "${workspaceFolder}/user"
   ],
   "python.autoComplete.extraPaths": [
     "${workspaceFolder}/app",
-    "${workspaceFolder}/core"
+    "${workspaceFolder}/core",
+    "${workspaceFolder}/user"
   ],
   "editor.tabSize": 4,
   "editor.insertSpaces": true
