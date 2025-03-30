@@ -52,3 +52,6 @@ docker volume rm recipe-app-apt_dev-db-data
 
 ### Create superuser
 docker-compose run --rm app sh -c "python manage.py createsuperuser"
+
+### Authorize in swagger
+Token {{token}}
