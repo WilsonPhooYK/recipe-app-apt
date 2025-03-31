@@ -23,20 +23,27 @@ RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
     # Install persist postgreql-client
     # The command apk add is used in Alpine Linux, a lightweight distribution, to install packages (software) from the system’s package repository.
-    apk add --update --no-cache postgresql-client && \
+    apk add --update --no-cache postgresql-client jpeg-dev && \
     # Group it so can delete later
     apk add --update --no-cache --virtual .tmp-build-deps \
-      build-base postgresql-dev musl-dev && \
+        build-base postgresql-dev musl-dev zlib zlib-dev && \
     /py/bin/pip install -r /tmp/requirements.txt && \
     if [ $DEV = "true" ]; \
-      then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
+        then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
     fi && \
     rm -rf /tmp && \
     apk del .tmp-build-deps && \
     adduser \
         --disabled-password \
         --no-create-home \
-        django-user
+        django-user && \
+    # -p creates all the subdirectory for the media path
+    mkdir -p /vol/web/media && \
+    mkdir -p /vol/web/static && \
+    # Change owner recursive /vol to django-user and group django-user
+    chown -R django-user:django-user /vol && \
+    # Change permission on that directory, owner and group of that directory can make any changes
+    chmod -R 755 /vol
 
 # Default path to /py/bin...
 ENV PATH="/py/bin:$PATH"

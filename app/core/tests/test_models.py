@@ -1,6 +1,7 @@
 """
 Tests for models
 """
+from unittest.mock import patch
 from decimal import Decimal
 
 from typing import cast
@@ -85,3 +86,27 @@ class ModelTests(TestCase):
         tag = models.Tag.objects.create(user=user, name='Tag1')
 
         self.assertEqual(str(tag), tag.name)
+
+    def test_create_ingredient(self):
+        """Test creating an ingredient is successful."""
+        user = create_user()
+        ingredient = models.Ingredient.objects.create(
+            user=user,
+            name='Ingredient1',
+        )
+
+        self.assertEqual(str(ingredient), ingredient.name)
+    
+    # Patch uuid function, so it doesn't generate a new uuid each time
+    @patch('core.models.uuid.uuid4')
+    def test_recipe_file_name_uuid(self, mock_uuid):
+        """Test generating image path."""
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        # Get the file path using the patched uuid
+        file_path = models.recipe_image_file_path(None, 'example.jpg') # type:ignore
+
+        # Check if the file path is as expected
+        # The expected path should include the uuid and the filename
+        exp_path = f'uploads/recipe/{uuid}.jpg'
+        self.assertEqual(file_path, exp_path)

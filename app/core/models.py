@@ -1,14 +1,27 @@
 """
 Databse models.
 """
+import uuid
+import os
+
 from typing import Optional, Any
 from django.conf import settings
 from django.db import models
+from django.db.models import Model
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin
 )
+
+def recipe_image_file_path(instance: Model, filename: str) -> str:
+    """Generate file path for new recipe image."""
+    # Generate a new UUID
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    # Eg: uploads/recipe/uuid.jpg
+    return os.path.join('uploads', 'recipe', filename)
 
 
 class UserManager(BaseUserManager['User']):
@@ -63,6 +76,8 @@ class Recipe(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.CharField(max_length=255, blank=True)
     tags = models.ManyToManyField('Tag') # type:ignore
+    ingredients = models.ManyToManyField('Ingredient') # type:ignore
+    image = models.ImageField(null=True, upload_to=recipe_image_file_path)
 
     # Display the title in django admin, if not will display the whole obj
     def __str__(self):
@@ -80,3 +95,16 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Ingredient(models.Model):
+    """Ingredient for recipes."""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return self.name
+    

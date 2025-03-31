@@ -15,6 +15,7 @@ router = DefaultRouter()
 # Creates recipe/recipes and then recipe/recipes:get recipe/recipes:post, etc form the viewset
 router.register('recipes', views.RecipeViewSet)
 router.register('tags', views.TagViewSet)
+router.register('ingredients', views.IngredientViewSet)
 
 # For reverse urls
 app_name = 'recipe'

@@ -15,6 +15,7 @@ services:
     # Map app dir to app in the container, so changes in our proj can reflect in the container same
     volumes:
       - ./app:/app
+      - dev-static-data:/vol/web
     # Command to run
     command: >
       sh -c "python manage.py wait_for_db &&
@@ -39,3 +40,4 @@ services:
 
 volumes:
   dev-db-data:
+  dev-static-data:
