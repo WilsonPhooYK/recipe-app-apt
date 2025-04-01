@@ -1,0 +1,47 @@
+version: "3.9"
+
+service:
+    app:
+        build:
+            # Use dockerfile at current directory
+            context: .
+        # If crashes restart automatically
+        restart: always
+        volumes:
+            # Map /vol/web to static-data in the container
+            - static-data:/vol/web
+        environment:
+            - DB_HOST=db
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - SECREYT_KEY=${DJANGO_SECRET_KEY}
+            - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+        depends_on:
+            - db
+
+    db:
+        image: postgres:13-alpine
+        restart: always
+        volumes:
+            # Map /var/lib/postgresql/data to db-data in the container
+            - postgres-data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_DB=${DB_NAME}
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PASS}
+
+    proxy:
+        build::
+            context: ./proxy
+        restart: always
+        depends_on:
+            -app
+        ports:
+            - "80:80"
+        volumes:
+            - static-data:/vol/static
+
+volumes:
+    postgres-data:
+    static-data:

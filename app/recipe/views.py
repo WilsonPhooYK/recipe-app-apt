@@ -23,6 +23,22 @@ from recipe import serializers
 # PUT /api/recipe/recipes/{id}/ – Update a recipe by its ID (update action)
 # PATCH /api/recipe/recipes/{id}/ – Partially update a recipe by its ID (partial_update action)
 # DELETE /api/recipe/recipes/{id}/ – Delete a recipe by its ID (destroy action)
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'tags',
+                OpenApiTypes.STR,
+                description='Comma separated list of tag IDs to filter',
+            ),
+            OpenApiParameter(
+                'ingredients',
+                OpenApiTypes.STR,
+                description='Comma separated list of ingredient IDs to filter',
+            ),
+        ],
+    )
+)
 class RecipeViewSet(viewsets.ModelViewSet):
     """View for manage recipe APIs"""
     serializer_class = serializers.RecipeDetailSerializer
@@ -87,6 +103,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'assigned_only',
+                # 0 - False, 1 - True
+                OpenApiTypes.INT, enum=[0, 1],
+                description='Filter by items assigned to recipes',
+            ),
+        ],
+    )
+)
 class BaseRecipeAttrViewSet(
     mixins.DestroyModelMixin,
     mixins.UpdateModelMixin,
@@ -98,7 +126,18 @@ class BaseRecipeAttrViewSet(
 
     def get_queryset(self):
         """Retrieve tags for authenticated user."""
-        return self.queryset.filter(user=self.request.user).order_by('-name') # type:ignore
+        assigned_only = bool(
+            # assigned_only = 0, by default
+            int(self.request.query_params.get('assigned_only', 0)) # type:ignore
+        )
+        queryset = self.queryset
+        if assigned_only:
+            # Need to have recipe
+            queryset = queryset.filter(recipe__isnull=False) # type:ignore
+
+        return queryset.filter( # type:ignore
+            user=self.request.user
+        ).distinct().order_by('-name')
 
 
 # ListModelMixin - Listing functionality

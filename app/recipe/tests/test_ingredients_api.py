@@ -1,6 +1,7 @@
 """
 Tests for ingredients API.
 """
+from decimal import Decimal
 from typing import Any, cast
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -10,7 +11,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.response import Response
 
-from core.models import Ingredient, UserManager
+from core.models import Ingredient, UserManager, Recipe
 
 from recipe.serializers import IngredientSerializer
 
@@ -95,3 +96,46 @@ class PrivateIngredientsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         ingredients = Ingredient.objects.filter(user=self.user) # type:ignore
         self.assertFalse(ingredients.exists())
+
+    def test_filter_ingredients_assigned_to_recipes(self):
+        """Test filtering ingredients by those assigned to recipes."""
+        ingredient1 = Ingredient.objects.create(user=self.user, name='Apples')
+        ingredient2 = Ingredient.objects.create(user=self.user, name='Turkey')
+        recipe = Recipe.objects.create(
+            title='Apple Crumble',
+            time_minutes=5,
+            price=Decimal('4.50'),
+            user=self.user,
+        )
+        recipe.ingredients.add(ingredient1)
+
+        # assigned_only=1 means only assigned ingredients
+        res: Response = cast(Response, self.client.get(INGREDIENTS_URL, {'assigned_only': 1})) # type:ignore
+        serializer1 = IngredientSerializer(ingredient1)
+        serializer2 = IngredientSerializer(ingredient2)
+        self.assertIn(serializer1.data, res.data) # type:ignore
+        self.assertNotIn(serializer2.data, res.data) # type:ignore
+
+    def test_filtered_ingredients_unique(self):
+        """Test filtered ingredients returns unique items."""
+        ingredient = Ingredient.objects.create(user=self.user, name='Eggs')
+        Ingredient.objects.create(user=self.user, name='Cheese')
+        recipe1 = Recipe.objects.create(
+            title='Eggs Benedict',
+            time_minutes=5,
+            price=Decimal('4.50'),
+            user=self.user,
+        )
+        recipe2 = Recipe.objects.create(
+            title='Eggs on Toast',
+            time_minutes=5,
+            price=Decimal('4.50'),
+            user=self.user,
+        )
+        recipe1.ingredients.add(ingredient)
+        recipe2.ingredients.add(ingredient)
+
+        res: Response = cast(Response, self.client.get(INGREDIENTS_URL, {'assigned_only': 1}))
+
+        # Should only return 1 egg
+        self.assertEqual(len(res.data), 1)  # type:ignore
